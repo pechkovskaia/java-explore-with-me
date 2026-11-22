@@ -29,7 +29,7 @@ public class StatsServiceImpl implements StatsService {
     @Override
     @Transactional(readOnly = true)
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        if(start.isAfter(end)) {
+        if (start.isAfter(end)) {
             throw new ValidationException("Дата начала не может быть позже даты окончания");
         }
 
@@ -40,7 +40,7 @@ public class StatsServiceImpl implements StatsService {
             return statsRepository.getAllStats(start, end);
         }
 
-        if(unique) {
+        if (unique) {
             return statsRepository.getUniqueStatsByUris(start, end, uris);
         }
         return statsRepository.getAllStatsByUris(start, end, uris);
