@@ -1,6 +1,7 @@
 package ru.practicum.event.service;
 
 import ru.practicum.event.dto.*;
+import ru.practicum.event.model.EventSort;
 import ru.practicum.event.model.EventState;
 
 import java.time.LocalDateTime;
@@ -20,4 +21,11 @@ public interface EventService {
                                      LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size);
 
     EventFullDto updateByAdmin(Long eventId, UpdateEventAdminRequest dto);
+
+    List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
+                                        LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                        boolean onlyAvailable, EventSort sort, int from, int size,
+                                        String uri, String ip);
+
+    EventFullDto getPublicEvent(Long id, String uri, String ip);
 }
