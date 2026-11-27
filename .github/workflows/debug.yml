@@ -1,11 +1,15 @@
 name: Debug startup
 
 on:
-  workflow_dispatch:
+  pull_request:
 
 jobs:
   debug:
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +27,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           path: tests
 
-      - name: Check and Build application
+      - name: Which timeout
+        run: |
+          cat /etc/os-release | grep PRETTY_NAME
+          readlink -f "$(command -v timeout)"
+          timeout --version | head -1
+
+      - name: Build
         run: |
           cp -rf ./tests/checkstyle.xml ./checkstyle.xml
           cp -rf ./tests/suppressions.xml ./suppressions.xml
@@ -37,29 +47,11 @@ jobs:
           ./tests/.github/workflows/wait-for-it.sh -t 60 localhost:8080
           ./tests/.github/workflows/wait-for-it.sh -t 60 localhost:9090
 
-      - name: Diagnostics
+      - name: Port check without wait-for-it
         if: always()
         run: |
-          docker compose ps -a
-          echo "===== EWM-SERVICE ====="
-          docker compose logs --no-color --timestamps ewm-service
-          echo "===== STATS-SERVER (last 50) ====="
-          docker compose logs --no-color stats-server | tail -n 50
-          echo "===== LISTENING PORTS ====="
-          sudo ss -ltnp | grep -E '8080|9090' || true
-          echo "===== CURL ====="
-          curl -sv --max-time 5 http://localhost:8080/events || true
-          curl -sv --max-time 5 http://127.0.0.1:8080/events || true
-          echo "===== WAIT-FOR-IT DEBUG ====="
-          W=$(find . -name wait-for-it.sh | head -1)
-          echo "script: $W"
-          file "$W"
-          head -1 "$W" | od -c | head -2
-          type -a timeout bash nc || true
-          echo "--- raw TCP check ---"
           timeout 5 bash -c 'echo -n > /dev/tcp/localhost/8080' && echo TCP_OK || echo TCP_FAIL
-          echo "--- wait-for-it trace ---"
-          bash -x "$W" -t 10 localhost:8080 2>&1 | tail -40 || true
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8080/events || true
 
       - name: Down
         if: always()
