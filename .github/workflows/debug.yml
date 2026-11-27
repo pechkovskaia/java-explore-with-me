@@ -50,6 +50,16 @@ jobs:
           echo "===== CURL ====="
           curl -sv --max-time 5 http://localhost:8080/events || true
           curl -sv --max-time 5 http://127.0.0.1:8080/events || true
+          echo "===== WAIT-FOR-IT DEBUG ====="
+          W=$(find . -name wait-for-it.sh | head -1)
+          echo "script: $W"
+          file "$W"
+          head -1 "$W" | od -c | head -2
+          type -a timeout bash nc || true
+          echo "--- raw TCP check ---"
+          timeout 5 bash -c 'echo -n > /dev/tcp/localhost/8080' && echo TCP_OK || echo TCP_FAIL
+          echo "--- wait-for-it trace ---"
+          bash -x "$W" -t 10 localhost:8080 2>&1 | tail -40 || true
 
       - name: Down
         if: always()
