@@ -56,23 +56,3 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
-  wait-for-apps:
-    image: postgres:16.1
-    entrypoint: ["sleep", "infinity"]
-    depends_on:
-      - ewm-service
-      - stats-server
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/ewm-service/8080 && echo > /dev/tcp/stats-server/9090'"]
-      interval: 5s
-      timeout: 3s
-      retries: 60
-      start_period: 10s
-
-  apps-ready:
-    image: postgres:16.1
-    entrypoint: ["true"]
-    depends_on:
-      wait-for-apps:
-        condition: service_healthy
